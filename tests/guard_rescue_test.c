@@ -27,8 +27,8 @@ static void test_guard_rescue(void) {
     /* Score floor: reachable means no intervention. */
     assert(guard_rescue(3, 100, 0, 0, 0, 0, 0, 0, 1, 900000) == 3);
 
-    /* Score floor: unreachable without help means rescue to Perfect. */
-    assert(guard_rescue(3, 100, 0, 0, 0, 50, 0, 0, 1, 900000) == 0);
+    /* Score floor: unreachable without help means rescue to Good, not Perfect. */
+    assert(guard_rescue(3, 100, 0, 0, 0, 50, 0, 0, 1, 900000) == 1);
 
     /* Guard off leaves the judgment untouched. */
     assert(guard_rescue(2, 100, 0, 0, 0, 0, 0, 0, 0, 0) == 2);

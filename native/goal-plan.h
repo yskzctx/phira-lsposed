@@ -124,7 +124,7 @@ static inline int guard_rescue(int what,int n,int perfect,int good,int bad,int m
             double best=((double)perfect+0.65*(double)good+(double)remaining)/(double)n;
             int best_score=(int)(900000.0*best+100000.0);
             if(best_score>=guard_score)return what;   /* floor still reachable */
-            return 0;
+            return 1;                                 /* protect floor: rescue to Good, not Perfect */
         }
     }
 }
