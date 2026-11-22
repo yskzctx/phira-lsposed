@@ -12,7 +12,7 @@
 #include <android/log.h>
 #include "controlled-frame.h"
 #include "profile.h"
-#include "../../common/hook-batch.h"
+#include "../common/hook-batch.h"
 typedef void(*LibraryLoaded)(const char*,void*);
 typedef struct{uint32_t version;LabHook hook;LabUnhook unhook;} NativeAPI;
 static LabBatch batch;static pthread_mutex_t lock=PTHREAD_MUTEX_INITIALIZER;
