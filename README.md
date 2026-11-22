@@ -1,16 +1,85 @@
-# Phira 0.8.3 ARM64 本地实验模块 · 0.3.0 候选
+# Phira LSPosed 模块
 
-Phira 本地实验模块 0.3.0 · 官方 0.8.3（40）arm64 适配候选
+**最新预发行：[v0.6.0](https://github.com/yskzctx/phira-lsposed/releases/tag/v0.6.0-pre.1)**
 
-不是仅改版本号。已对官方新 APK/ELF 重新核对完整哈希、11 个原生函数的可执行范围/前缀、输入 LocalKey 重定位，以及 Judge.update 的实际调用与字段位置。对新原生库运行键盘/触摸事件及几何坐标的 ARM64 机器码探针；这不是手机或整局验收。
+> **未经过真机 LSPosed 验收。**
 
-保留自研自动游玩、目标分数/准确率、Perfect/Good早晚/随机/Bad/Miss规则、随机K、音符类型筛选与结算 ±ms 设置。新增“自动游玩时屏蔽真实触摸”开关、S/FC/AT保护与额外保护分数；保护随离目标越远提高Perfect救判概率，显式规则优先。没有替换成官方自动游玩。存档继续直接使用原版路径，修改前在宿主内部 files/phira-module-backups/original-data-before-module.json 备份；只恢复成绩字段。测试验证 0.8.3 的 login_source 字段不被覆盖，账号/资源/配置保留。
+运行时附加，**不修改游戏 APK、不改签名、不重打包**。保留宿主登录、联网和原版上传流程，不绕过服务器、账号、购买或反作弊校验。
 
-免责声明同意按钮显式设蓝底白字，取消按钮浅底深字，防止宿主主题覆盖。冷启动自动游玩仍关闭。模块保持原版网络选择与原版校验，不添加账号/服务器/完整性或反作弊绕过。
+| 产物 | 目标 |
+|---|---|
+| `Phira-Lab-LSPosed-0.8.3-arm64-v0.6.0-TEST.apk` | Phira 0.8.3(40) arm64 |
 
-安装：覆盖安装 com.phira.lab.lsp，LSPosed 仅勾选 org.flos.phira，完全退出后冷启动 Phira 0.8.3。不要同时启用同一宿主的辅助观察模块或旧实验模块。没有改变原版存档位置；已有备份保留。备份含私人信息，请勿公开。恢复请在关闭游戏后保存当前数据副本，再将上述备份复制回宿主 files/data/data.json；不要清除游戏数据。
+覆盖安装后强停目标游戏再打开。
 
-当前通过：主机输入/坐标/密集触点回收/规则/随机K/计分/时间误差/触摸屏蔽/成绩保护回归、配置与原档备份恢复、新版 DEX 接口核对、签名和16KB对齐。完整游戏 Judge、真实 LSPosed、存档真实设备、上传行为及宿主主题渲染仍未验收，因此仅作预发行候选。
+---
 
+## 功能
 
-构建：`python build_module.py --sdk <SDK> --ndk <NDK> --xposed-api <API82> --keystore <外部签名库> --alias <别名> --password-file <外部密码文件> --out <输出目录>`
+### 判定保护（事后改判，不接管输入）
+
+| 保护等级 | 效果 |
+|---|---|
+| 辅助 S | 低于保底分数时把判定改好 |
+| 辅助 FC | Bad / Miss 改成 Perfect，Good 保留 |
+| 辅助 AT | 任何非 Perfect 都改成 Perfect |
+
+判定产生后改判，**不替你按键**。
+
+### 结算页强制显示
+
+- 分数、准确率、P/G/B/M、最大连击
+- 结算符号：不干预 / Φ（全 Perfect）/ FC（无 Bad、Miss）
+- Good 早/晚：可选开关
+
+### 其他
+
+- **结算时间误差**：目标 ±ms
+- **Phira 历史记录**：目标 RKS
+- **恢复历史成绩**
+- **音符皮肤**：标准 Phira 音符图包
+- **自制章节**：Phira 原生支持自制谱，此入口打开本地章节库
+
+---
+
+## 实现要点
+
+### 保护不依赖可疑偏移
+
+保护逻辑原本整个包在 `if (inner == observed_judge + 0x58)` 里。`0x58` 是判定对象上的硬编码字段偏移——**如果对当前 Phira 版本不对，分支永远不进，保护静默失效**。
+
+决定要不要改判只需要判定值本身，所以改判逻辑已移出偏移检查，偏移仅用于模块自己的计数记账。
+
+### 诊断日志
+
+保护路径有有界诊断（只打 4 次，不刷屏）：
+
+```
+adb logcat -s PhiraLab | grep guard.diag
+```
+
+- `rescued>0` → 改判在工作
+- `rescued=0` → 判定没被改
+- `offsetMatched=0` → 偏移不匹配，但不影响改判
+
+---
+
+## 构建
+
+```bash
+python build_module.py \
+    --sdk <Android SDK> --ndk <NDK> --xposed-api <api-82.jar> \
+    --keystore <jks> --alias <alias> --password-file <txt> \
+    --out <输出目录>
+```
+
+---
+
+## 相关仓库
+
+- [Phigros 模块](https://github.com/yskzctx/phigros-lsposed)
+- [Phigros 离线修改版](https://github.com/yskzctx/phigros-offline-lab)
+
+## 免责声明
+
+见 [DISCLAIMER.md](DISCLAIMER.md)。
