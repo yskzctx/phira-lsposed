@@ -254,7 +254,7 @@ function toast(s){$('toast').textContent=s;$('toast').classList.remove('hidden')
 function send(action,payload={}){if(hasBridge)OfflineBridge.submit(action,JSON.stringify(payload));else{if(action==='save'||action==='reset'){dirty=false;showDirty();toast('界面预览：配置已保存')}else if(action==='auto'){ $('auto-label').textContent=payload.enabled?'开启':'关闭';toast('界面预览：切换自动游玩')}else toast('界面预览：'+action+'（手机中会执行）')}}
 function showDirty(){ $('save').textContent=dirty?'保存修改 · 下一局生效':'保存 · 下一局生效'}
 function mark(){dirty=true;showDirty()}
-document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x===b));document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id===b.dataset.tab));window.scrollTo(0,0);});
+document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x===b));document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id===b.dataset.tab));window.scrollTo(0,0);});
 function setMode(m){mode=m;document.querySelectorAll('[data-mode]').forEach(b=>b.classList.toggle('active',+b.dataset.mode===m));$('score-field').classList.toggle('hidden',m!==1);$('acc-field').classList.toggle('hidden',m!==2)}
 document.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>{setMode(+b.dataset.mode);mark()});
 ['score','accuracy'].forEach(id=>$(id).oninput=mark);

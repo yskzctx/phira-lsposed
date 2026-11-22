@@ -1,0 +1,11 @@
+fix: panel buttons were dead because the tab handler was nested inside itself
+
+The panel opened (volume key) but no button responded. An earlier edit had replaced the tab
+handler with a copy of itself:
+
+    document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{...});
+
+The outer arrow body never closed, so the script threw a SyntaxError at load and no handler was
+attached at all - the panel was visible but inert.
+
+Also adds the shared 判定保护-only panel (自动补全 removed) and bumps to 0.6.1.
