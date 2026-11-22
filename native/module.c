@@ -38,7 +38,7 @@ static void (*commit_original)(void*,unsigned,double);
 /* Observation only: forward every original parameter unchanged and let the
  * original protected update run. Never reconstruct/patch protected values. */
 static unsigned protection_rescue(unsigned what,double *diff){
- if(frame_config.mode!=3||what>3)return what;
+ if((frame_config.mode!=3&&frame_config.mode!=4)||what>3)return what;
  int safe=guard_rescue((int)what,observed.total,observed.counts[0],observed.counts[1],observed.counts[2],observed.counts[3],observed.combo,observed.max_combo,frame_config.assist_guard,frame_config.guard_score);
  if(safe==(int)what)return what;
  if(safe==1){*diff=.12;return 1;}
@@ -125,7 +125,7 @@ static void commit_observer(void *inner,unsigned what,double diff){
  // The rescue depends only on the judgment itself, not on the judge struct layout. Keeping
  // it outside the offset check is what makes protection work even when 0x58 does not match
  // this build - previously the whole feature sat behind that one comparison.
- if(what<=3&&frame_config.mode==3&&!(tracked&&rank>0&&plan.explicit_plan&&plan.explicit_plan[rank])){
+ if(what<=3&&(frame_config.mode==3||frame_config.mode==4)&&!(tracked&&rank>0&&plan.explicit_plan&&plan.explicit_plan[rank])){
   unsigned before=what;what=protection_rescue(what,&diff);guard_diag(tracked,what!=before);
  }
  commit_original(inner,what,diff);
@@ -154,6 +154,7 @@ static void judge_update(void *judge,void *resource,void *chart,void *bad_notes)
  if(!atomic_load(&armed)){judge_original(judge,resource,chart,bad_notes);return;}
  plan.touch=&touch_api;
  pthread_mutex_lock(&config_lock);frame_config=pending_config;pthread_mutex_unlock(&config_lock);
+ // Mode 4 is protection-only: it never requests synthetic input.
  bool requested=atomic_load(&enabled)||frame_config.mode==3;
  plan.seen_p=observed.counts[0];plan.seen_g=observed.counts[1];plan.seen_b=observed.counts[2];plan.seen_m=observed.counts[3];plan.seen_combo=observed.combo;plan.seen_max=observed.max_combo;
  bool okay=lab_frame_begin(&plan,judge,resource,chart,requested,&frame_config,(uint32_t)((uintptr_t)chart^(uintptr_t)judge^0xa73c819du),&input_api);
@@ -230,11 +231,11 @@ JNIEXPORT jboolean JNICALL Java_com_phira_lab_LabNative_configureForcedResult(JN
  return JNI_TRUE;
 }
 JNIEXPORT jboolean JNICALL Java_com_phira_lab_LabNative_configure(JNIEnv *env,jclass type,jint mode,jint target,jint accuracy,jint timing,jboolean block_touch,jint assist_guard,jint guard_score,jintArray words){
- (void)type;if(mode<0||mode>3||target<0||target>1000000||accuracy<0||accuracy>10000||timing<0||timing>750||assist_guard<0||assist_guard>3||guard_score<0||guard_score>1000000||(mode==3&&(assist_guard<1||(assist_guard==3&&guard_score<1)))||!words)return JNI_FALSE;
+ (void)type;if(mode<0||mode>4||target<0||target>1000000||accuracy<0||accuracy>10000||timing<0||timing>750||assist_guard<0||assist_guard>3||guard_score<0||guard_score>1000000||(mode==3&&(assist_guard<1||(assist_guard==3&&guard_score<1)))||!words)return JNI_FALSE;
  int length=(*env)->GetArrayLength(env,words);if(length<1||length>MAX_CONFIG_WORDS)return JNI_FALSE;
  jint packed[MAX_CONFIG_WORDS];(*env)->GetIntArrayRegion(env,words,0,length,packed);if((*env)->ExceptionCheck(env))return JNI_FALSE;
  bool typed=packed[0]==-168;if(typed&&length<2)return JNI_FALSE;
- if(mode!=3)assist_guard=0; ControlConfig c={.mode=mode,.target=target,.accuracy=accuracy,.timing_tenths_ms=timing,.block_touch=(mode!=3&&block_touch==JNI_TRUE),.assist_guard=assist_guard,.guard_score=guard_score,.rule_count=packed[typed?1:0]};if(c.rule_count<0||c.rule_count>MAX_RULES)return JNI_FALSE;int cursor=typed?2:1;
+ if(mode!=3&&mode!=4)assist_guard=0; ControlConfig c={.mode=mode,.target=target,.accuracy=accuracy,.timing_tenths_ms=timing,.block_touch=(mode!=3&&mode!=4&&block_touch==JNI_TRUE),.assist_guard=assist_guard,.guard_score=guard_score,.rule_count=packed[typed?1:0]};if(c.rule_count<0||c.rule_count>MAX_RULES)return JNI_FALSE;int cursor=typed?2:1;
  for(int i=0;i<c.rule_count;i++){
   if(cursor+(typed?7:6)>length)return JNI_FALSE;
   NoteRule *r=&c.rules[i];r->judgment=packed[cursor++];r->position=packed[cursor++];r->start=packed[cursor++];r->end=packed[cursor++];r->count=packed[cursor++];r->note_type=typed?packed[cursor++]:0;r->length=packed[cursor++];

@@ -30,7 +30,7 @@ public final class ControlsConfig {
         return a;
     }
     public static ControlsConfig parse(int mode,String target,String accuracy,String text) {
-        if(mode<0||mode>2)throw new IllegalArgumentException("未知游玩模式");
+        if(mode<0||mode>4)throw new IllegalArgumentException("未知游玩模式");
         int t=1000000,a=10000;
         // Only the active target is required. Retain valid inactive values;
         // normalize empty/invalid hidden fields before saving or JNI dispatch.
