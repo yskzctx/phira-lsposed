@@ -125,7 +125,7 @@ static void commit_observer(void *inner,unsigned what,double diff){
  // The rescue depends only on the judgment itself, not on the judge struct layout. Keeping
  // it outside the offset check is what makes protection work even when 0x58 does not match
  // this build - previously the whole feature sat behind that one comparison.
- if(what<=3&&(frame_config.mode==3||frame_config.mode==4)&&atomic_load(&enabled)&&!(tracked&&rank>0&&plan.explicit_plan&&plan.explicit_plan[rank])){
+ if(what<=3&&(frame_config.mode==3||frame_config.mode==4)&&!(tracked&&rank>0&&plan.explicit_plan&&plan.explicit_plan[rank])){
   unsigned before=what;what=protection_rescue(what,&diff);guard_diag(tracked,what!=before);
  }
  commit_original(inner,what,diff);

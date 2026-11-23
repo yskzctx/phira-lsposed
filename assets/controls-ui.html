@@ -21,7 +21,10 @@ input:focus,select:focus,button:focus-visible,summary:focus-visible{outline:2px 
 .tab{flex:0 0 auto;min-height:40px;border-radius:999px;background:#fff;border:1px solid var(--line);padding:0 16px;color:var(--muted);font-weight:600}
 .tab.active{background:var(--blue);border-color:var(--blue);color:#fff}
 
-main{padding:4px 14px 0}
+main{padding:4px 12px 0;max-width:680px;margin:0 auto;width:100%}
+html{-webkit-text-size-adjust:100%}
+@media (max-width:420px){.card{padding:12px;border-radius:12px}.title{font-size:17px}.modes button{min-height:56px}.footer{padding:10px 12px calc(12px + env(safe-area-inset-bottom))}}
+@media (min-width:681px){.top{padding-left:calc((100% - 680px)/2 + 12px);padding-right:calc((100% - 680px)/2 + 12px)}}
 .page{display:none}.page.active{display:block}
 
 .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin:10px 0}
@@ -256,7 +259,7 @@ function showDirty(){ $('save').textContent=dirty?'保存修改 · 下一局生�
 function mark(){dirty=true;showDirty()}
 document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x===b));document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id===b.dataset.tab));window.scrollTo(0,0);});
 function setMode(m){mode=m;document.querySelectorAll('[data-mode]').forEach(b=>b.classList.toggle('active',+b.dataset.mode===m));$('score-field').classList.toggle('hidden',m!==1);$('acc-field').classList.toggle('hidden',m!==2)}
-document.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>{setMode(+b.dataset.mode);mark()});
+document.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>{setMode(+b.dataset.mode);if(+b.dataset.mode===4&&!$('auto').checked){$('auto').checked=true;$('auto-label').textContent='开启';send('auto',{enabled:true});}mark()});
 ['score','accuracy'].forEach(id=>$(id).oninput=mark);
 function blankRule(){return {judgment:1,position:1,noteType:0,start:'100',end:'100',count:'1',indices:''}}
 function field(label,value,key,index){let l=document.createElement('label');l.className='field';let s=document.createElement('span');s.textContent=label;l.append(s);let input=document.createElement('input');input.type='text';input.inputMode=key==='indices'?'text':'numeric';input.value=value;input.maxLength=key==='indices'?12000:5;input.oninput=()=>{rules[index][key]=input.value;mark()};l.append(input);return l}
@@ -280,11 +283,14 @@ $('skin-open').onclick=()=>send('skin-open');
 $('chapter-open').onclick=()=>send('chapter-open');
 $('timing-ms').oninput=mark;
 $('reset').onclick=()=>{$('timing-ms').value='0';setMode(0);rules=[];$('score').value='1000000';$('accuracy').value='100';renderRules();send('reset')};
-$('auto').onchange=()=>{send('auto',{enabled:$('auto').checked});if(hasBridge)$('auto').disabled=true};
+$('auto').onchange=()=>{const on=$('auto').checked;$('auto-label').textContent=on?'开启':'关闭';if(!on&&mode===4){setMode(0);mark();toast('判定保护需要自动游玩，已切回默认模式');}send('auto',{enabled:on});};
 $('rks-apply').onclick=()=>send('rks',{target:$('rks').value});$('all-ap').onclick=()=>send('all-ap');$('restore').onclick=()=>send('restore');
-$('force-save').onclick=()=>{const v={enabled:$('force-enabled').checked,score:$('force-score').value.trim(),accuracy:$('force-accuracy').value.trim(),perfect:$('force-perfect').value.trim(),good:$('force-good').value.trim(),bad:$('force-bad').value.trim(),miss:$('force-miss').value.trim(),combo:$('force-combo').value.trim(),earlyLateOn:$('force-early-late-on').checked,early:$('force-early').value.trim(),late:$('force-late').value.trim(),symbol:parseInt($('force-symbol').value||'0',10)};
+function saveForce(){const v={enabled:$('force-enabled').checked,score:$('force-score').value.trim(),accuracy:$('force-accuracy').value.trim(),perfect:$('force-perfect').value.trim(),good:$('force-good').value.trim(),bad:$('force-bad').value.trim(),miss:$('force-miss').value.trim(),combo:$('force-combo').value.trim(),earlyLateOn:$('force-early-late-on').checked,early:$('force-early').value.trim(),late:$('force-late').value.trim(),symbol:parseInt($('force-symbol').value||'0',10)};
  if(v.enabled&&v.score===''&&v.accuracy===''&&v.perfect===''&&v.good===''&&v.bad===''&&v.miss===''&&v.combo==='')return toast('开启后请至少填写一项');
- send('force-result',v)};
+ send('force-result',v)}
+$('force-save').onclick=saveForce;
+$('force-enabled').onchange=()=>{$('force-label').textContent=$('force-enabled').checked?'开启':'关闭';saveForce();};
+$('force-early-late-on').onchange=()=>{$('force-early-late-label').textContent=$('force-early-late-on').checked?'单独设置':'跟随判定';saveForce();};
 $('force-clear').onclick=()=>{['force-score','force-accuracy','force-perfect','force-good','force-bad','force-miss','force-combo','force-early','force-late'].forEach(id=>$(id).value='');$('force-enabled').checked=false;$('force-early-late-on').checked=false;$('force-symbol').value='0';$('force-early-late-label').textContent='跟随判定';$('force-label').textContent='关闭';toast('已清空，记得点保存')};
 window.receive=function(s){$('auto').checked=!!s.auto;$('auto').disabled=false;$('auto-label').textContent=s.auto?'开启':'关闭';$('skin-state').textContent=s.skin||'默认皮肤';
  if(!initial||s.reload){$('timing-ms').value=s.timingMs||'0';$('block-touch').checked=s.blockTouch!==false;$('assist-guard').value=String(s.assistGuard||0);$('guard-score').value=String(s.guardScore||0);initial=true;dirty=false;setMode(s.mode||0);$('score').value=s.score;$('accuracy').value=s.accuracy;rules=(s.rules||[]).map(r=>({...r,noteType:r.noteType||0}));renderRules();$('rks').value=s.rksTarget||'';showDirty()}
