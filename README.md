@@ -8,7 +8,7 @@
 
 | 产物 | 目标 |
 |---|---|
-| `Phira-Lab-LSPosed-0.8.3-arm64-v0.6.5-TEST.apk` | Phira 0.8.3(40) arm64 |
+| `Phira-Lab-LSPosed-0.8.3-arm64-v0.6.5.apk` | Phira 0.8.3(40) arm64 |
 
 覆盖安装后强停目标游戏再打开。
 
