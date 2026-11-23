@@ -13,10 +13,26 @@ public final class GoalControls {
   if(assistGuard<0||assistGuard>3||guardScore<0||guardScore>1000000)throw new IllegalArgumentException("成绩保护参数无效");
   if(!LabNative.configure(c.mode,c.target,c.accuracy,timing,blockTouch,assistGuard,guardScore,c.packed))throw new IllegalArgumentException("原生判定控制拒绝此配置");
  }
+ /** “想要自动游玩”的界面意图，和原生 enabled(注入) 解耦：保护模式下 enabled=0，
+  *  但开关仍应保持"开"，不能因为回读原生状态而瞬间弹回。 */
+ public static boolean wantAutoplay(Context c){return preferences(c).getBoolean("want_autoplay",false);}
+ public static void setWantAutoplay(Context c,boolean v){preferences(c).edit().putBoolean("want_autoplay",v).commit();}
+ /** 自动游玩=注入；只对注入型模式(自动AP/目标分数/目标准确率, mode 0/1/2)开 enabled。
+  *  判定保护(mode 3/4)是被动事后改判，不注入，无论开关都按所选模式生效。 */
+ public static void applySession(ControlsConfig c,int timing,boolean blockTouch,int assistGuard,int guardScore,boolean autoToggle){
+  boolean inject=autoToggle&&c.mode<=2;
+  int guard=(c.mode==3||c.mode==4)?assistGuard:0;
+  if(guard<0||guard>3||guardScore<0||guardScore>1000000)throw new IllegalArgumentException("成绩保护参数无效");
+  LabNative.setEnabled(inject);
+  if(!LabNative.configure(c.mode,c.target,c.accuracy,timing,blockTouch,guard,guardScore,c.packed))throw new IllegalArgumentException("原生判定控制拒绝此配置");
+ }
+ public static void applyActive(Context c,ControlsConfig cfg,int timing,boolean blockTouch,int assistGuard,int guardScore){
+  applySession(cfg,timing,blockTouch,assistGuard,guardScore,wantAutoplay(c));
+ }
  public static void save(Context context,ControlsConfig c){save(context,c,timing(context));}
  public static void save(Context context,ControlsConfig c,int timing){save(context,c,timing,blockTouch(context),assistGuard(context),guardScore(context));}
  public static void save(Context context,ControlsConfig c,int timing,boolean blockTouch,int assistGuard,int guardScore){
-  apply(c,timing,blockTouch,assistGuard,guardScore);
+  applyActive(context,c,timing,blockTouch,assistGuard,guardScore);
   if(!preferences(context).edit().putInt("goal_mode",c.mode).putString("score",Integer.toString(c.target)).putString("accuracy",new BigDecimal(c.accuracy).divide(new BigDecimal(100)).toPlainString()).putString("rules",c.encodedRules).putInt("timing_tenths_ms",timing).putBoolean("block_touch",blockTouch).putInt("assist_guard",assistGuard).putInt("guard_score",guardScore).commit())throw new IllegalStateException("配置未能写入存储");
  }
  public static int[] status(){try{int[] s=LabNative.controlStatus();return s!=null&&s.length==21?s:new int[21];}catch(UnsatisfiedLinkError e){return new int[21];}}

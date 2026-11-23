@@ -117,8 +117,8 @@ static inline int guard_rescue(int what,int n,int perfect,int good,int bad,int m
     switch(assist_guard){
         case 3:                               /* protect AP */
             return 0;
-        case 2:                               /* protect FC: no Bad, no Miss */
-            return (what==2||what==3)?0:what;
+        case 2:                               /* protect FC: no Bad, no Miss -> Miss/Bad 救成 Good（不升 Perfect） */
+            return (what==2||what==3)?1:what;
         default: {                            /* protect a score floor */
             if(guard_score<1)return what;
             double best=((double)perfect+0.65*(double)good+(double)remaining)/(double)n;
