@@ -1,6 +1,6 @@
 # Phira LSPosed 模块
 
-**最新预发行：[v0.6.5](https://github.com/yskzctx/phira-lsposed/releases/tag/v0.6.5-pre.1)**
+**最新正式版：[v0.6.5](https://github.com/yskzctx/phira-lsposed/releases/tag/v0.6.5)**
 
 > **未经过真机 LSPosed 验收。**
 
